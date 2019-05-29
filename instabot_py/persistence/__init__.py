@@ -15,7 +15,7 @@ class PersistenceBase:
         """ insert media to medias """
         raise NotImplementedError()
 
-    def insert_username(self, user_id, username):
+    def insert_username(self, user_id, username,followed_from_bot):
         """ insert user_id to usernames """
         raise NotImplementedError()
 

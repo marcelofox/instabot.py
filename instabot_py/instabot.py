@@ -970,7 +970,7 @@ class InstaBot:
                 feed_user_id = mediafeed_user["node"]["owner"]["id"]
                 # print(self.persistence.check_if_userid_exists( userid=feed_user_id))
                 if not self.persistence.check_if_userid_exists(userid=feed_user_id):
-                    self.persistence.insert_username(user_id=feed_user_id, username=feed_username)
+                    self.persistence.insert_username(user_id=feed_user_id, username=feed_username,followed_from_bot=0)
                     self.logger.debug(f"Inserted user {feed_username} from recent feed")
         except Exception as exc:
             self.logger.warning("Notice: could not populate from recent feed")
