@@ -68,6 +68,12 @@ class Persistence(PersistenceBase):
         follower = Follower(id=user_id, username=username,followed_from_bot=followed_from_bot)
         self._session.add(follower)
         self._session.commit()
+    
+    def insert_username_last_year(self, user_id, username, followed_from_bot, create_date):
+        """ insert user_id to usernames """
+        follower = Follower(id=user_id, username=username,followed_from_bot=followed_from_bot,created=create_date)
+        self._session.add(follower)
+        self._session.commit()
 
     def insert_unfollow_count(self, user_id=None, username=None):
         """ track unfollow count for new futures """
@@ -99,6 +105,11 @@ class Persistence(PersistenceBase):
         """ Gets the number of usernames in table """
 
         return self._session.query(Follower).count()
+
+    def get_all_followers(self):
+        """ Gets all followers from table """
+
+        return self._session.query(Follower)
 
     def get_medias_to_unlike(self):
         """ Gets random media id that is older than unlike_time"""
