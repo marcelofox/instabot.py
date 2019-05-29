@@ -71,7 +71,7 @@ class Persistence(PersistenceBase):
     
     def insert_username_last_year(self, user_id, username, followed_from_bot, create_date):
         """ insert user_id to usernames """
-        follower = Follower(id=user_id, username=username,followed_from_bot=followed_from_bot,created=create_date)
+        follower = Follower(id=user_id, username=username,followed_from_bot=followed_from_bot,last_followed=create_date)
         self._session.add(follower)
         self._session.commit()
 
