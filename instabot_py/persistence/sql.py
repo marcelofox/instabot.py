@@ -18,6 +18,7 @@ class Follower(Base):
     created = Column(DateTime, default=datetime.now())
     last_followed = Column(DateTime, default=datetime.now())
     unfollow_count = Column(Integer, default=0)
+    followed_from_bot = Column(Integer,default=0)
 
 
 class Media(Base):
@@ -62,9 +63,9 @@ class Persistence(PersistenceBase):
         self._session.add(media)
         self._session.commit()
 
-    def insert_username(self, user_id, username):
+    def insert_username(self, user_id, username, followed_from_bot):
         """ insert user_id to usernames """
-        follower = Follower(id=user_id, username=username)
+        follower = Follower(id=user_id, username=username,followed_from_bot=followed_from_bot)
         self._session.add(follower)
         self._session.commit()
 

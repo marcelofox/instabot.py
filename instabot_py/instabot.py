@@ -44,7 +44,8 @@ class InstaBot:
     url_user_detail = "https://www.instagram.com/%s/"
     api_user_detail = "https://i.instagram.com/api/v1/users/%s/info/"
     instabot_repo_update = (
-        "https://github.com/instabot-py/instabot.py/raw/master/version.txt"
+        "https://github.com/marcelofox/instabot.py/raw/master/version.txt"
+        
     )
 
     def __init__(self, **kwargs):
@@ -764,7 +765,7 @@ class InstaBot:
                     self.follow_counter += 1
                     log_string = f"Followed: {self.url_user(username)} #{self.follow_counter}."
                     self.logger.info(log_string)
-                    self.persistence.insert_username(user_id=user_id, username=username)
+                    self.persistence.insert_username(user_id=user_id, username=username,followed_from_bot=1)
                 return follow
             except:
                 logging.exception("Except on follow!")
@@ -1159,6 +1160,7 @@ class InstaBot:
                 return False
             current_id = follower.id
             current_user = follower.username
+            is_followed_by_bot = follower.followed_from_bot
             if not current_user:
                 current_user = self.get_username_by_user_id(user_id=current_id)
             if not current_user:
@@ -1268,20 +1270,27 @@ class InstaBot:
             else:
                 return False
 
+            
+            #if (
+            #        self.is_selebgram is not False
+            #        or self.is_fake_account is not False
+            #        or self.is_active_user is not True
+            #        or self.is_follower is not True
+            #):
+            #    self.unfollow(current_id, current_user)
+            #    # don't insert unfollow count as it is done now inside unfollow()
+            #    # self.persistence.insert_unfollow_count( user_id=current_id)
+            #elif self.unfollow_everyone is True:
+            #    self.logger.debug(f"current_user :{current_user}")
+            #    self.unfollow(current_id, current_user)
+            #elif self.is_following is not True:
+            #    # we are not following this account, hence we unfollowed it, let's keep track
+            #    self.persistence.insert_unfollow_count(user_id=current_id)
             if (
-                    self.is_selebgram is not False
-                    or self.is_fake_account is not False
-                    or self.is_active_user is not True
-                    or self.is_follower is not True
+                    is_follower is not True or is_followed_by_bot > 0
             ):
                 self.unfollow(current_id, current_user)
-                # don't insert unfollow count as it is done now inside unfollow()
-                # self.persistence.insert_unfollow_count( user_id=current_id)
-            elif self.unfollow_everyone is True:
-                self.logger.debug(f"current_user :{current_user}")
-                self.unfollow(current_id, current_user)
             elif self.is_following is not True:
-                # we are not following this account, hence we unfollowed it, let's keep track
                 self.persistence.insert_unfollow_count(user_id=current_id)
 
     def unfollow_recent_feed(self):
