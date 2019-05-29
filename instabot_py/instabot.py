@@ -1287,7 +1287,7 @@ class InstaBot:
             #    # we are not following this account, hence we unfollowed it, let's keep track
             #    self.persistence.insert_unfollow_count(user_id=current_id)
             if (
-                    is_follower is not True or is_followed_by_bot > 0
+                    self.is_follower is not True or is_followed_by_bot > 0
             ):
                 self.unfollow(current_id, current_user)
             elif self.is_following is not True:
