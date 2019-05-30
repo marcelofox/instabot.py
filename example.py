@@ -22,6 +22,7 @@ bot = InstaBot(
     unfollow_break_min=15,
     unfollow_break_max=30,
     user_max_follow=0,
+    follow_only_more_than_him=True
     # session_file=False, # Set to False to disable persistent session, or specify custom session_file (ie ='myusername.session')
     user_min_follow=0,
     log_mod=0,

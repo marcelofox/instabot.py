@@ -90,7 +90,7 @@ class Persistence(PersistenceBase):
 
     def get_username_random(self):
         """ Gets random username """
-        follower = self._session.query(Follower).filter(Follower.unfollow_count == 0).filter(followed_from_bot > 0).order_by(func.random()).first()
+        follower = self._session.query(Follower).filter(Follower.unfollow_count == 0).filter(Follower.followed_from_bot > 0).order_by(func.random()).first()
         return str(follower.username) if follower else None
 
     def get_username_to_unfollow_random(self):
@@ -98,7 +98,7 @@ class Persistence(PersistenceBase):
         now_time = datetime.now()
         cut_off_time = now_time - timedelta(seconds=self.bot.follow_time)
         return self._session.query(Follower) \
-            .filter(Follower.last_followed < cut_off_time).filter(followed_from_bot > 0) \
+            .filter(Follower.last_followed < cut_off_time).filter(Follower.followed_from_bot > 0) \
             .order_by(func.random()).first()
 
     def get_username_row_count(self):

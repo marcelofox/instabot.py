@@ -127,6 +127,8 @@ class InstaBot:
         self.user_max_follow = config.get("user_max_follow")
         # Don't follow if user have less than n followers.
         self.user_min_follow = config.get("user_min_follow")
+        # Don't follow if user follows less users than follow him
+        self.follow_only_more_than_him = config.get("follow_only_more_than_him")
 
         # Auto mod seting:
         # Default list of tag.
@@ -911,6 +913,9 @@ class InstaBot:
                     followers = all_data["entry_data"]["ProfilePage"][0]["graphql"][
                         "user"
                     ]["edge_followed_by"]["count"]
+                    following = all_data["entry_data"]["ProfilePage"][0]["graphql"][
+                        "user"
+                    ]["edge_follow"]["count"]
 
                     if followers < self.user_min_follow:
                         self.logger.info(
@@ -921,6 +926,12 @@ class InstaBot:
                     if self.user_max_follow != 0 and followers > self.user_max_follow:
                         self.logger.info(
                             f"Won't follow {username}: does not meet user_max_follow requirement"
+                        )
+                        return
+                    
+                    if followers * 1.25 < following and self.follow_only_more_than_him:
+                        self.logger.info(
+                            f"Won't follow {username}: user is not following more people than follow him"
                         )
                         return
 
