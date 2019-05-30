@@ -929,7 +929,7 @@ class InstaBot:
                         )
                         return
                     
-                    if followers * 1.25 < following and self.follow_only_more_than_him:
+                    if followers * 1.25 > following and self.follow_only_more_than_him:
                         self.logger.info(
                             f"Won't follow {username}: user is not following more people than follow him"
                         )
