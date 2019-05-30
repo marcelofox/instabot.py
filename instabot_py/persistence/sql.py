@@ -98,7 +98,7 @@ class Persistence(PersistenceBase):
         now_time = datetime.now()
         cut_off_time = now_time - timedelta(seconds=self.bot.follow_time)
         return self._session.query(Follower) \
-            .filter(Follower.last_followed < cut_off_time) \
+            .filter(Follower.last_followed < cut_off_time).filter(followed_from_bot > 0) \
             .order_by(func.random()).first()
 
     def get_username_row_count(self):
