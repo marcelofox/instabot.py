@@ -933,7 +933,7 @@ class InstaBot:
                         self.logger.info(
                             f"Won't follow {username}: user is not following more people than follow him"
                         )
-                        time.sleep(10) #Sleeps 10 seconds to avoid massive profile GET
+                        self.next_iteration["Follow"] = time.time() + self.add_time(self.follow_delay / 2) #Sleeps 10 seconds to avoid massive profile GET
                         return
 
                 except Exception:
