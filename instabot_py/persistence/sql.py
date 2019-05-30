@@ -90,7 +90,7 @@ class Persistence(PersistenceBase):
 
     def get_username_random(self):
         """ Gets random username """
-        follower = self._session.query(Follower).filter(Follower.unfollow_count == 0).order_by(func.random()).first()
+        follower = self._session.query(Follower).filter(Follower.unfollow_count == 0).filter(followed_from_bot > 0).order_by(func.random()).first()
         return str(follower.username) if follower else None
 
     def get_username_to_unfollow_random(self):
