@@ -936,11 +936,12 @@ class InstaBot:
                         )
                         retryCount += 1
                         self.logger.info("But ok, i'm gonna give another try")
-                        time.sleep(10) #Sleeps to avoid massive GET
+                        time.sleep(5) #Sleeps to avoid massive GET
                         if retryCount > 3:
                             retryCount =0
                             self.next_iteration["Follow"] = time.time() + self.add_time(self.follow_delay / 2) 
                             return
+                        return
 
                 except Exception:
                     pass
