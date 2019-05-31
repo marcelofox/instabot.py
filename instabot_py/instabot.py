@@ -929,12 +929,18 @@ class InstaBot:
                         )
                         return
                     
+                    retryCount = 0
                     if followers * 1.25 > following:
                         self.logger.info(
                             f"Won't follow {username}: user is not following more people than follow him"
                         )
-                        self.next_iteration["Follow"] = time.time() + self.add_time(self.follow_delay / 2) #Sleeps 10 seconds to avoid massive profile GET
-                        return
+                        retryCount += 1
+                        self.logger.info("But ok, i'm gonna give another try")
+                        time.sleep(10) #Sleeps to avoid massive GET
+                        if retryCount > 3:
+                            retryCount =0
+                            self.next_iteration["Follow"] = time.time() + self.add_time(self.follow_delay / 2) 
+                            return
 
                 except Exception:
                     pass
