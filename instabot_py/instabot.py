@@ -1013,7 +1013,7 @@ class InstaBot:
                             self.persistence.delete_from_possible_user(user_id = current_id)
                             self.next_iteration["FollowCommenters"] = time.time() + self.add_time(self.follow_delay / 2)
                             return False
-                        
+                        self.logger.info(f"Will follow a commenter: {current_user}")
                         if (
                             self.follow(
                                 user_id=current_id,
