@@ -133,6 +133,7 @@ class InstaBot:
         # Auto mod seting:
         # Default list of tag.
         self.tag_list = config.get("tag_list")
+        self.user_commented_list = config.get("user_commented_list")
         # Get random tag, from tag_list, and like (1 to n) times.
         self.max_like_for_one_tag = config.get("max_like_for_one_tag")
         # log_mod 0 to console, 1 to file
@@ -205,6 +206,8 @@ class InstaBot:
             "Unfollow": 0,
             "Comments": 0,
             "Populate": 0,
+            "FollowCommenters":0,
+
         }
 
         self.populate_user_blacklist()
@@ -483,10 +486,49 @@ class InstaBot:
             logging.exception("Logout error!")
 
     def cleanup(self, *_):
-
         if self.login_status and self.session_file is None:
             self.logout()
         self.prog_run = False
+
+    def populate_from_user_commenters(self):
+        random_user= random.choice(self.user_commented_list)
+
+        self.logger.info(f"Populating users from commenters of user: {random_user}")
+        try:
+            if self.login_status == 1:
+                url_location = self.url_user_detail % (random_user)
+                r = self.s.get(url_location)
+                all_data = json.loads(
+                    re.search(
+                        "window._sharedData = (.*?);</script>", r.text, re.DOTALL
+                    ).group(1)
+                )
+                media_id = all_data["entry_data"]["ProfilePage"][0]["graphql"]["user"]["edge_owner_to_timeline_media"]["edges"][0]["node"]["shortcode"]
+
+                url_media_local = self.url_media_detail % (media_id)
+                m = self.s.get(url_media_local)
+                media_data = json.loads(m.text)
+                
+                for usertof in media_data["graphql"]["shortcode_media"]["edge_media_to_parent_comment"]["edges"]:
+                    c_username = usertof["node"]["owner"]["username"]
+                    c_userid = usertof["node"]["owner"]["id"]
+                    if self.persistence.check_if_possible_userid_exists(userid= c_userid) <= 0:
+                        try:
+                            self.logger.info(f"Trying to save commenter: {c_username}")
+                            self.persistence.insert_possible_user(username=c_username,user_id = c_userid, create_date = datetime.datetime.now())
+                        except:
+                            self.logger.warning(f"Except on populate commenters: {c_username}")
+                    else:
+                        self.logger.info("Already on database.")
+        except Exception as exc:
+            self.logger.warning("Except on populate commenters")
+            self.logger.exception(exc) 
+
+
+
+
+            
+
 
     def get_media_id_by_tag(self, tag):
         """ Get media ID set, by your hashtag or location """
@@ -532,6 +574,9 @@ class InstaBot:
                         self.logger.exception("get_media_id_by_tag")
                 else:
                     return 0
+
+
+    
 
     def get_instagram_url_from_media_id(self, media_id, url_flag=True, only_code=None):
         """ Get Media Code or Full Url from Media ID Thanks to Nikished """
@@ -826,6 +871,8 @@ class InstaBot:
                 self.new_auto_mod_unfollow()
                 # ------------------- Comment -------------------
                 self.new_auto_mod_comments()
+                # -------------------- Follow Commenters ------------
+                self.new_auto_mod_follow_commenters()
                 # Bot iteration in 1 sec
                 time.sleep(1)
                 self.logger.debug("Tic!")
@@ -884,6 +931,109 @@ class InstaBot:
                 self.next_iteration["Unlike"] = time.time() + self.add_time(
                     self.unlike_per_day
                 )
+    def new_auto_mod_follow_commenters(self):
+        username = None
+        if time.time() < self.next_iteration["FollowCommenters"]:
+            return
+        if (
+                time.time() > self.next_iteration["FollowCommenters"]
+                and self.follow_per_day != 0
+        ):
+            if self.persistence.get_usertofollow_row_count() < 1:
+                self.logger.debug("Not Enough users to follow from commenters. Will load." )
+                self.populate_from_user_commenters()
+            
+            user = self.persistence.get_possible_username_random()
+            
+            if not user:
+                self.logger.debug("No commenters found." )
+                self.next_iteration["FollowCommenters"] = time.time() + self.add_time(self.follow_delay)
+                return False
+            
+            checkDbUser = self.persistence.get_follower(user.id)
+
+            if checkDbUser:
+                self.logger.debug("Already Followed Before. Deleting." )
+                self.persistence.delete_from_possible_user(user.id)
+                return False
+            
+            current_id = user.id
+            current_user = user.username
+
+            if self.login_status:
+                log_string = f"Getting user info : {current_user}"
+                self.logger.debug(log_string)
+                if self.login_status == 1:
+                    url_tag = self.url_user_detail % (current_user)
+                    try:
+                        r = self.s.get(url_tag)
+                        if (
+                                r.text.find(
+                                    "The link you followed may be broken, or the page may have been removed."
+                                )
+                                != -1
+                        ):
+                            log_string = (
+                                f"Looks like account was deleted, skipping : {current_user}"
+                            )
+                            self.logger.debug(log_string)
+                            self.persistence.delete_from_possible_user(user_id=current_id)
+                            time.sleep(3)
+                            return False
+
+                        all_data = json.loads(
+                            re.search(
+                                "window._sharedData = (.*?);</script>", r.text, re.DOTALL
+                            ).group(1)
+                        )["entry_data"]["ProfilePage"][0]
+
+                        user_info = all_data["graphql"]["user"]
+                        i = 0
+                        log_string = "Checking user info.."
+                        self.logger.debug(log_string)
+
+                        follows = user_info["edge_follow"]["count"]
+                        follower = user_info["edge_followed_by"]["count"]
+                        media = user_info["edge_owner_to_timeline_media"]["count"]
+                        follow_viewer = user_info["follows_viewer"]
+                        followed_by_viewer = user_info["followed_by_viewer"]
+                        requested_by_viewer = user_info["requested_by_viewer"]
+                        has_requested_viewer = user_info["has_requested_viewer"]
+
+                        if followed_by_viewer or follow_viewer:
+                            self.logger.info(
+                                f"Won't follow {current_user}: already following"
+                            )
+                        
+                        if follows * 1.10 > follower:
+                            self.logger.info(
+                                f"Won't follow {current_user}: user is not following more people than follow him"
+                            )
+                            self.persistence.delete_from_possible_user(user_id = current_id)
+                            self.next_iteration["FollowCommenters"] = time.time() + self.add_time(self.follow_delay / 2)
+                            return False
+                        
+                        if (
+                            self.follow(
+                                user_id=current_id,
+                                username=current_user,
+                            )
+                            is not False
+                        ):
+                            self.persistence.delete_from_possible_user(user_id = current_id)
+                            self.next_iteration["FollowCommenters"] = time.time() + self.add_time(
+                                self.follow_delay
+                            )
+                    except:
+                        logging.exception("Except on auto_follow_commenters!")
+                        time.sleep(3)
+                        return False
+                    
+
+                    
+
+
+
 
     def new_auto_mod_follow(self):
         username = None

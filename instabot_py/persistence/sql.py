@@ -28,6 +28,12 @@ class Media(Base):
     status = Column(Integer)
     code = Column(String)
 
+class UserToFollow(Base):
+    __tablename__ = "usertofollow"
+    id = Column(String, primary_key=True)
+    username = Column(String)
+    created = Column(DateTime, default=datetime.now())
+
 
 class Persistence(PersistenceBase):
 
@@ -62,6 +68,33 @@ class Persistence(PersistenceBase):
         media = Media(id=media_id, status=status)
         self._session.add(media)
         self._session.commit()
+
+    def insert_possible_user(self, username, user_id,create_date):
+        """ insert media to medias """
+        user = UserToFollow(id=user_id, username=username,created=create_date)
+        self._session.add(user)
+        self._session.commit()
+    
+    def delete_from_possible_user(self,user_id):
+        """ delete username """
+        self._session.query(UserToFollow).filter(UserToFollow.id == user_id).delete()
+        self._session.commit()
+    
+    def get_possible_username_random(self):
+        """ Gets random username  """
+        usertofollow = self._session.query(UserToFollow).order_by(func.random()).first()
+        return usertofollow if usertofollow else None
+
+    def check_if_possible_userid_exists(self, userid):
+        """ Checks if username exists """
+        return self._session.query(UserToFollow).filter(UserToFollow.id == userid).count()
+
+    def get_usertofollow_row_count(self):
+        """ Gets the number of usernames in table """
+
+        return self._session.query(UserToFollow).count()   
+        
+        
 
     def insert_username(self, user_id, username, followed_from_bot):
         """ insert user_id to usernames """
@@ -104,12 +137,17 @@ class Persistence(PersistenceBase):
     def get_username_row_count(self):
         """ Gets the number of usernames in table """
 
-        return self._session.query(Follower).count()
+        return self._session.query(Follower).count()    
 
     def get_all_followers(self):
         """ Gets all followers from table """
 
         return self._session.query(Follower)
+    
+    def get_follower(self,user_id):
+        """ Gets all followers from table """
+
+        return self._session.query(Follower).filter(Follower.id == user_id).first()
 
     def get_medias_to_unlike(self):
         """ Gets random media id that is older than unlike_time"""
