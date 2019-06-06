@@ -65,6 +65,7 @@ class InstaBot:
         self.user_agent = random.sample(config.get("list_of_ua"), 1)[0]
 
         self.current_version = 1556087528
+        self.retryCount = 0 #controlador de retentativas de follow
 
         self.bot_start = datetime.datetime.now()
         self.bot_start_ts = time.time()
@@ -1079,16 +1080,16 @@ class InstaBot:
                         )
                         return
                     
-                    retryCount = 0
+                    
                     if followers * 1.25 > following:
                         self.logger.info(
                             f"Won't follow {username}: user is not following more people than follow him"
                         )
-                        retryCount += 1
+                        self.retryCount += 1
                         self.logger.info("But ok, i'm gonna give another try")
                         time.sleep(5) #Sleeps to avoid massive GET
-                        if retryCount > 3:
-                            retryCount =0
+                        if self.retryCount > 3:
+                            self.retryCount =0
                             self.next_iteration["Follow"] = time.time() + self.add_time(self.follow_delay / 2) 
                             return
                         return
