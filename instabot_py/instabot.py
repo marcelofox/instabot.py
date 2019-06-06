@@ -1006,7 +1006,7 @@ class InstaBot:
                                 f"Won't follow {current_user}: already following"
                             )
                         
-                        if follows * 1.10 > follower:
+                        if follows * 1.10 < follower:
                             self.logger.info(
                                 f"Won't follow {current_user}: user is not following more people than follow him"
                             )
