@@ -1442,10 +1442,10 @@ class InstaBot:
 
             
             if (
-                    self.is_selebgram is not False
+                    (self.is_selebgram is not False
                     or self.is_fake_account is not False
                     or self.is_active_user is not True
-                    or self.is_follower is not True
+                    or self.is_follower is not True) and self.is_following is True
             ):
                 self.unfollow(current_id, current_user)
                 # don't insert unfollow count as it is done now inside unfollow()
